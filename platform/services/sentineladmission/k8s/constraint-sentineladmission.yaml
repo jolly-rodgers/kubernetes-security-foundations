@@ -1,0 +1,21 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: SentinelAdmission
+metadata:
+  name: sentineladmission-baseline
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "StatefulSet", "DaemonSet", "ReplicaSet"]
+      - apiGroups: ["batch"]
+        kinds: ["Job", "CronJob"]
+  parameters:
+    allowedNamespaces:
+      - kube-system
+      - gatekeeper-system
+      - payments
+    enforceRunAsNonRoot: true
+    disallowPrivileged: true
+    disallowHostPath: true

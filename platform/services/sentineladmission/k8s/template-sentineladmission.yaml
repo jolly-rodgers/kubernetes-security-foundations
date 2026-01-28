@@ -1,0 +1,107 @@
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: sentineladmission
+spec:
+  crd:
+    spec:
+      names:
+        kind: SentinelAdmission
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            allowedNamespaces:
+              type: array
+              items:
+                type: string
+            enforceRunAsNonRoot:
+              type: boolean
+            disallowPrivileged:
+              type: boolean
+            disallowHostPath:
+              type: boolean
+          required:
+            - allowedNamespaces
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package sentineladmission
+
+        allowed_namespace(ns, allowed) { allowed[_] == ns }
+
+        is_pod { input.review.kind.kind == "Pod" }
+
+        is_controller {
+          input.review.kind.kind == "Deployment"
+        } or {
+          input.review.kind.kind == "StatefulSet"
+        } or {
+          input.review.kind.kind == "DaemonSet"
+        } or {
+          input.review.kind.kind == "ReplicaSet"
+        } or {
+          input.review.kind.kind == "Job"
+        } or {
+          input.review.kind.kind == "CronJob"
+        }
+
+        ns := input.review.object.metadata.namespace
+
+        # Invariant: only approved namespaces
+        violation[{"msg": msg}] {
+          allowed := input.parameters.allowedNamespaces
+          not allowed_namespace(ns, allowed)
+          msg := sprintf("deny: namespace %q is not approved (allowed: %v)", [ns, allowed])
+        }
+
+        # Baseline: require runAsNonRoot
+        violation[{"msg": msg}] {
+          input.parameters.enforceRunAsNonRoot == true
+          is_pod
+          sc := input.review.object.spec.securityContext
+          not sc.runAsNonRoot
+          msg := "deny: Pod must set spec.securityContext.runAsNonRoot=true"
+        }
+
+        violation[{"msg": msg}] {
+          input.parameters.enforceRunAsNonRoot == true
+          is_controller
+          sc := input.review.object.spec.template.spec.securityContext
+          not sc.runAsNonRoot
+          msg := "deny: Workload must set spec.template.spec.securityContext.runAsNonRoot=true"
+        }
+
+        # Baseline: disallow privileged containers
+        violation[{"msg": msg}] {
+          input.parameters.disallowPrivileged == true
+          is_pod
+          c := input.review.object.spec.containers[_]
+          c.securityContext.privileged == true
+          msg := "deny: privileged containers are not allowed"
+        }
+
+        violation[{"msg": msg}] {
+          input.parameters.disallowPrivileged == true
+          is_controller
+          c := input.review.object.spec.template.spec.containers[_]
+          c.securityContext.privileged == true
+          msg := "deny: privileged containers are not allowed"
+        }
+
+        # Baseline: disallow hostPath
+        violation[{"msg": msg}] {
+          input.parameters.disallowHostPath == true
+          is_pod
+          v := input.review.object.spec.volumes[_]
+          v.hostPath
+          msg := "deny: hostPath volumes are not allowed"
+        }
+
+        violation[{"msg": msg}] {
+          input.parameters.disallowHostPath == true
+          is_controller
+          v := input.review.object.spec.template.spec.volumes[_]
+          v.hostPath
+          msg := "deny: hostPath volumes are not allowed"
+        }
