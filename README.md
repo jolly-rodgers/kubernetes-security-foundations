@@ -1,90 +1,111 @@
 # Kubernetes Security Foundations
 
-**Executive Summary**
-
-**Kubernetes Security Foundations** is a secure-by-default platform that enforces non-optional security controls for Kubernetes workloads at runtime.
-
-The platform uses **policy-as-code**, **admission control**, a**nd Kubernetes-native enforcement** to ensure that every workload meets baseline security requirements **before it is deployed**, while producing **audit-ready evidence** for compliance and incident response.
-
-It is designed to be **consumed by engineering teams**, integrated into CI/CD pipelines, and operated at scale by platform security teams. Developers follow a paved road to deploy compliant workloads without friction, while security teams gain continuous enforcement, visibility, and verifiable evidence.
-
-This repository demonstrates how modern platform security teams replace documentation and point-in-time reviews with **enforceable systems that scale across clusters, clouds, and regulated environments.**
-
-Secure-by-default **Cloud & Kubernetes Security Foundations Platform** enforcing
+**Secure-by-default Cloud & Kubernetes Security Foundations Platform** enforcing
 **runtime policy**, **admission controls**, and **audit-ready evidence** using
-Policy-as-Code.
+**Policy-as-Code**.
 
-This repository demonstrates how platform security teams can provide
-**non-optional guardrails** that are enforced automatically, consumed by
-engineers through a paved road, and continuously verifiable for audit and
-incident response.
+---
+
+## Executive Summary
+
+**Kubernetes Security Foundations** is a platform designed to enforce **non-optional
+security controls at runtime** for Kubernetes workloads.
+
+Rather than relying on documentation, point-in-time reviews, or best-effort
+guidelines, this platform embeds security directly into the Kubernetes control
+plane using **policy-as-code**, **admission control**, and **native enforcement
+mechanisms**.
+
+Workloads are evaluated **before deployment**, violations are **blocked by
+default**, and every allow/deny decision produces **machine-readable evidence**
+suitable for compliance, audit, and incident response.
+
+The platform is built to be:
+- **Consumed by engineers**
+- **Integrated into CI/CD pipelines**
+- **Operated by platform security teams at scale**
+
+Security becomes the default behavior, not an after-the-fact review.
 
 ---
 
 ## Why This Exists
 
 In many organizations, Kubernetes security relies on:
+- Documentation instead of enforcement
+- Point-in-time security reviews
+- Trust in developer correctness
+- Reactive detection after deployment
 
-- Documentation instead of enforcement  
-- Point-in-time reviews  
-- Trust in developer correctness  
-- Reactive detection after deployment  
-
-This leads to configuration drift, inconsistent security posture, and weak audit
-evidence.
+This leads to:
+- Configuration drift
+- Inconsistent security posture
+- Late discovery of risk
+- Weak audit evidence
 
 This platform takes a different approach:
 
-> **Security is enforced at runtime, not reviewed after the fact.**
+> **Security is enforced continuously and automatically, not reviewed after the fact.**
 
 ---
 
 ## What This Platform Provides
 
 ### 🔒 Secure-by-Default Guardrails
-- Unsafe workloads are blocked automatically
+- Unsafe workloads are rejected automatically
 - No opt-out, no best-effort enforcement
-- Violations are rejected at admission time
+- Violations are blocked at admission time
 
 ### 🛣️ Developer Paved Road
 - Clear, actionable error messages
 - Engineers declare intent instead of negotiating approvals
-- Compliant workloads deploy without friction
+- Compliant workloads deploy without security intervention
 
 ### 📜 Policy-as-Code
-- Rego policies define security invariants
+- Security invariants are defined in Rego
 - Policies are versioned, reviewed, and testable
 - Controls evolve safely over time
 
 ### 🧾 Audit & Evidence
 - Every allow/deny decision is logged
-- Violations are queryable and attributable
-- Evidence is suitable for SOC 2, NIST 800-53, and incident response
+- Decisions are attributable to workload identity
+- Evidence supports SOC 2, NIST 800-53, and incident response workflows
 
 ---
 
 ## Platform Architecture
 
-At a high level, the platform sits **between developers and the Kubernetes API**
-to ensure all workloads meet baseline security requirements.
+At a high level, the platform sits **between developers and the Kubernetes API** to
+ensure that all workloads meet baseline security requirements **before deployment**.
 
-**Key layers:**
-- Policy Layer (OPA / Rego)
-- Admission Control (Gatekeeper)
-- Kubernetes-native enforcement
-- Evidence & audit logging
+### Core Layers
+
+- **Policy Layer**  
+  OPA / Rego policies define security invariants
+
+- **Admission Control**  
+  Gatekeeper enforces policies at Kubernetes admission time
+
+- **Kubernetes-Native Enforcement**  
+  Violations are blocked using native control-plane mechanisms
+
+- **Audit & Evidence**  
+  All decisions are logged and queryable
+
+The platform is built around **reconciliation loops** that continuously enforce
+desired state, detect drift, and **fail safely into least-privilege behavior** if
+controls or telemetry degrade.
 
 This mirrors how real platform security teams operate in production environments.
 
 ---
 
----
-
 ## Key Demo Scenarios
 
-The demo is intentionally structured to mirror **real platform usage**.
+The demo is intentionally structured to reflect **real platform usage**.
 
 ### 1️⃣ Guardrails Exist (DENY)
+
 Non-compliant workloads are rejected by default.
 
 Examples:
@@ -97,24 +118,27 @@ Examples:
 ---
 
 ### 2️⃣ Enforcement Is Consistent (DENY)
-Even in approved namespaces, baseline pod security is enforced.
 
-Security controls do not disappear once access is granted.
+Even in approved namespaces, baseline security controls are enforced.
+
+Access does not weaken enforcement.
 
 📸 Evidence: `docs/screenshots-main/02-enforcement/`
 
 ---
 
 ### 3️⃣ Paved Road for Developers (ALLOW)
+
 Compliant workloads deploy successfully without security intervention.
 
-This demonstrates how security enables velocity instead of blocking it.
+Security enables velocity instead of blocking it.
 
 📸 Evidence: `docs/screenshots-main/03-paved-road/`
 
 ---
 
-### 4️⃣ Audit & Evidence (VERY IMPORTANT)
+### 4️⃣ Audit & Evidence (CRITICAL)
+
 Every allow/deny decision is observable and attributable.
 
 This enables:
@@ -132,10 +156,10 @@ In a real environment, this platform would be:
 
 - Consumed by 100+ engineers
 - Integrated into CI/CD pipelines
-- Extended with additional constraints over time
+- Extended with additional policies over time
 - Backed by cloud-native logging and SIEM systems
 
-The same patterns shown here scale directly to:
+The same patterns demonstrated here scale directly to:
 - Multi-cluster environments
 - Multi-cloud deployments
 - Regulated workloads
@@ -148,27 +172,26 @@ The same patterns shown here scale directly to:
 - Open Policy Agent (OPA)
 - Gatekeeper
 - Rego
-- kind (local cluster)
+- kind (local Kubernetes)
 - Policy-as-Code patterns
 
 ---
 
 ## License
 
-MIT License — this project is intended as a **reference architecture and
+MIT License — this repository is intended as a **reference architecture and
 portfolio demonstration**, not a commercial product.
 
 ---
 
 ## Author Intent
 
-This repository was built to demonstrate **principal-level platform security
-thinking**:
+This project was built to demonstrate **principal-level platform security thinking**:
 
-- Designing enforceable systems
+- Designing enforceable systems instead of writing policy
 - Balancing security with developer experience
 - Producing evidence, not documentation
-- Building foundations that scale
+- Building foundations that scale across teams and environments
 
-It reflects how modern cloud security teams operate in high-trust,
-high-scale environments.
+It reflects how modern cloud and platform security teams operate in
+high-trust, high-scale organizations.
